@@ -8,7 +8,8 @@
 | :--- | :--- |
 | `docs/PROGRESS.md` | **面向组员的项目进度总表**；迭代内的任务进度用 `tools/progress.sh` 统计 |
 | `.specify/memory/constitution.md` | **项目宪法（最高优先级）**：七条核心原则、技术与产品约束、开发流程、治理 |
-| `PRD-错题本系统.md` | 需求、范围、验收标准、迭代计划 |
+| `docs/PRD-错题本系统.md` | 需求、范围、验收标准、迭代计划 |
+| `docs/course/` | 课程资料（课程介绍、成绩评分标准），原始材料，不要改 |
 | `docs/architecture.md` | 技术选型（含被否决方案）、架构、数据模型、接口契约、部署演进 |
 | `docs/ocr-engine-selection.md` | OCR 引擎选型：候选、实测数据、局限、来源 |
 | `docs/development-conventions.md` | **响应格式、错误码、分层、测试、前端、Git 规范，必须遵守** |

@@ -42,8 +42,9 @@ cd frontend && npm run typecheck && npm test
 | 文档 | 内容 |
 | :--- | :--- |
 | **[docs/PROGRESS.md](docs/PROGRESS.md)** | **项目进度：做到哪了、下一步做什么、已知问题** |
-| [PRD-错题本系统.md](PRD-错题本系统.md) | 需求、范围、验收标准、迭代计划 |
+| [docs/PRD-错题本系统.md](docs/PRD-错题本系统.md) | 需求、范围、验收标准、迭代计划 |
 | [docs/architecture.md](docs/architecture.md) | 技术架构、数据模型、接口契约 |
 | [docs/ocr-engine-selection.md](docs/ocr-engine-selection.md) | OCR 引擎选型调研与实测 |
 | [docs/development-conventions.md](docs/development-conventions.md) | 开发规范 |
+| [docs/course/](docs/course/) | 课程资料：课程介绍、组织方式、成绩评分标准 |
 | [CLAUDE.md](CLAUDE.md) | 面向 AI 助手的项目说明 |
