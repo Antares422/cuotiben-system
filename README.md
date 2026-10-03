@@ -50,6 +50,18 @@ $env:STATIC_DIR = "../frontend/dist"; uv run uvicorn app.main:create_app --facto
 
 可选的辅助命令：`/speckit-clarify`（规格有含糊处时提问）、`/speckit-analyze`（检查规格、计划、任务是否一致）、`/speckit-checklist`。
 
+**用 Claude 以外的 AI agent？** 仓库里现在只带了 Claude 版的命令（`.claude/skills/`），其他 agent 需要在自己电脑上装一次（`specify-cli` 1.0.13，只用 gemini 实测过，其他 agent 同一套机制但未逐个验证）：
+
+```bash
+uv tool install specify-cli==1.0.13
+specify init --here --force --non-interactive --integration <agent>   # 例如 gemini、copilot、codex，可选值见 specify init --help
+git checkout -- .specify                                              # 还原被改动的共享文件，见下方说明
+```
+
+- 已有的**宪法、规格、计划、任务不会被覆盖**（实测：宪法显示 `existing file preserved`，`specs/` 没有任何变化）。
+- **装完后不要提交 `.specify/` 里被改动的文件，也不要提交新增的 agent 目录**（用 `git status` 看）。`init` 会把"默认 agent"改成你的，并把模板里的命令写法一起改掉（Claude 是 `/speckit-plan`，Gemini 是 `/speckit.plan`）；提交上来会让全队的配置被带偏。上面的 `git checkout -- .specify` 就是还原它们，agent 自己的命令目录留在本地即可。
+- 命令名因 agent 而异（`/speckit-plan` 或 `/speckit.plan`），它们读的是同一套模板，产物相同。
+
 **动手前先问自己**
 
 - 我要做的事，对应当前迭代 `tasks.md` 里的哪个任务？**找不到对应任务，就先别写代码。**
