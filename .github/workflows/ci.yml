@@ -1,0 +1,51 @@
+# 镜像宪法「提交前门槛」：后端 ruff + 测试，前端类型检查 + 测试 + 构建。
+# 任何一项不过，这次推送/合并请求就显示红叉。
+name: CI
+
+on:
+  push:
+    branches: [main, 'feat/**', 'fix/**', 'docs/**', 'chore/**', 'refactor/**', 'test/**']
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: 后端（ruff + 测试）
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+      # --locked：uv.lock 与 pyproject.toml 不一致时直接失败，避免"我这里能跑"
+      - run: uv sync --locked
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      # 默认不跑 integration（需要真实 OCR 引擎和模型），见 pyproject.toml 的 addopts
+      - run: uv run pytest -q
+
+  frontend:
+    name: 前端（类型检查 + 测试 + 构建）
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v7
+      # Vite 8 / Vitest 5 要求 Node ≥ 22.12，与 package.json 的 engines 保持一致
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build

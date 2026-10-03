@@ -6,7 +6,7 @@
 
 | 文档 | 内容 |
 | :--- | :--- |
-| `docs/PROGRESS.md` | **面向组员的项目进度总表**；迭代内的任务进度用 `tools/progress.sh` 统计 |
+| `docs/PROGRESS.md` | **面向组员的项目进度总表与分工规则**；任务进度和负责人用 `tools/progress.sh` 统计 |
 | `.specify/memory/constitution.md` | **项目宪法（最高优先级）**：七条核心原则、技术与产品约束、开发流程、治理 |
 | `docs/PRD-错题本系统.md` | 需求、范围、验收标准、迭代计划 |
 | `docs/course/` | 课程资料（课程介绍、成绩评分标准），原始材料，不要改 |
@@ -56,6 +56,8 @@ OCR_ENGINE=fake uv run uvicorn app.main:create_app --factory --reload   # 开发
 ```
 
 提交前必须通过：`uv run ruff check . && uv run ruff format --check . && uv run pytest -m "not integration"`。
+
+这些检查也由 CI（`.github/workflows/ci.yml`）在每次推送和合并请求时自动运行；CI 红了就不要合并。
 
 前端（在 `frontend/` 下）：
 
