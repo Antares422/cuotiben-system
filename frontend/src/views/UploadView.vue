@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { errorMessage } from '../api/client'
 import { createMistake, listSubjects, uploadImage } from '../api/mistakes'
@@ -20,8 +20,19 @@ const saving = ref(false)
 const notice = ref('')
 const error = ref('')
 
+const STEPS = ['拍照', '核对', '保存']
+// 拍了照或自己敲了题目，就进入"核对"；点了保存，就进入"保存"
+const step = computed(() => {
+  if (saving.value) return 2
+  return imageId.value || content.value.trim() ? 1 : 0
+})
+
 onMounted(async () => {
-  subjects.value = await listSubjects()
+  try {
+    subjects.value = await listSubjects()
+  } catch (e) {
+    error.value = errorMessage(e)
+  }
 })
 
 /** 标签可以用中英文逗号、顿号或空格分隔；去掉空白并去重。 */
@@ -83,7 +94,18 @@ async function onPhotoChosen(event: Event) {
 
 <template>
   <div>
-    <label class="picker">
+    <ol class="steps" data-testid="steps">
+      <li
+        v-for="(label, index) in STEPS"
+        :key="label"
+        :class="{ done: index < step }"
+        :aria-current="index === step ? 'step' : undefined"
+      >
+        {{ label }}
+      </li>
+    </ol>
+
+    <label class="picker" :class="{ busy: uploading, has: imageUrl }">
       <input
         type="file"
         accept="image/*"
@@ -92,30 +114,51 @@ async function onPhotoChosen(event: Event) {
         :disabled="uploading"
         @change="onPhotoChosen"
       />
-      {{ imageUrl ? '换一张图片' : '拍照 / 选择错题图片' }}
+      <svg viewBox="0 0 48 48" class="cam" aria-hidden="true">
+        <path
+          d="M8 15h8l3-5h10l3 5h8a2 2 0 0 1 2 2v20a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V17a2 2 0 0 1 2-2z"
+          fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"
+        />
+        <circle cx="24" cy="26" r="7" fill="none" stroke="currentColor" stroke-width="2.6" />
+      </svg>
+      <strong>{{ imageUrl ? '换一张图片' : '拍下这道错题' }}</strong>
+      <small>{{ imageUrl ? '重新识别会覆盖下面的题目内容' : '自动识别文字，识别不准可以直接改' }}</small>
     </label>
-    <p v-if="uploading" role="status" class="status" data-testid="status">正在识别文字…</p>
+
     <p v-if="error" role="alert" class="error" data-testid="error">{{ error }}</p>
     <p v-if="notice" class="notice" data-testid="notice">{{ notice }}</p>
-    <img v-if="imageUrl" :src="imageUrl" alt="题目原图" class="preview" data-testid="preview" />
 
-    <form @submit.prevent="onSave">
-      <label for="content">题目内容 <span class="req">*</span></label>
-      <textarea id="content" v-model="content" rows="5" data-testid="content" />
+    <figure v-if="imageUrl" class="polaroid" :class="{ scanning: uploading }">
+      <img :src="imageUrl" alt="题目原图" data-testid="preview" />
+    </figure>
+    <p v-if="uploading" role="status" class="status" data-testid="status">
+      <span class="dots" aria-hidden="true"></span>正在识别文字…
+    </p>
 
-      <label for="subject">学科 <span class="req">*</span></label>
+    <form class="sheet" @submit.prevent="onSave">
+      <label for="content" class="field">题目内容 <i class="req" title="必填"></i></label>
+      <textarea id="content" v-model="content" rows="5" class="ruled" data-testid="content" />
+
+      <label for="subject" class="field">学科 <i class="req" title="必填"></i></label>
       <select id="subject" v-model="subjectId" data-testid="subject">
         <option value="">请选择学科</option>
         <option v-for="s in subjects" :key="s.id" :value="s.id">{{ s.name }}</option>
       </select>
 
-      <label for="answer">正确答案</label>
-      <textarea id="answer" v-model="answer" rows="2" data-testid="answer" />
+      <label for="answer" class="field">正确答案</label>
+      <textarea id="answer" v-model="answer" rows="2" class="ruled" data-testid="answer" />
 
-      <label for="error-reason">错误原因</label>
-      <textarea id="error-reason" v-model="errorReason" rows="2" data-testid="error-reason" />
+      <label for="error-reason" class="field">错误原因</label>
+      <textarea
+        id="error-reason"
+        v-model="errorReason"
+        rows="2"
+        class="ruled pen"
+        placeholder="用一句话写下当时为什么错"
+        data-testid="error-reason"
+      />
 
-      <label for="tags">知识点标签（用逗号或空格分隔）</label>
+      <label for="tags" class="field">知识点标签 <small>用逗号或空格分隔</small></label>
       <input id="tags" v-model="tagsText" type="text" data-testid="tags" />
 
       <div class="actions">

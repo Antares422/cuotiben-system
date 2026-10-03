@@ -67,7 +67,7 @@ describe('MistakeListView', () => {
     const { wrapper } = await mountList()
 
     const empty = wrapper.find('[data-testid="empty"]')
-    expect(empty.text()).toContain('还没有错题')
+    expect(empty.text()).toContain('本子还是空的')
     expect(empty.find('a').attributes('href')).toBe('/')
     expect(wrapper.find('[data-testid="item"]').exists()).toBe(false)
   })
@@ -149,5 +149,21 @@ describe('MistakeListView', () => {
     expect(wrapper.find('[data-testid="error"]').text()).toContain('服务器开小差了，请稍后再试')
     expect(wrapper.findAll('[data-testid="item"]')).toHaveLength(2)
     expect(wrapper.find('[data-testid="more"]').exists()).toBe(true)
+  })
+
+  it('shows the total number of mistakes, not just the loaded ones', async () => {
+    installFakeBackend({ 'GET /api/mistakes': () => page([mistake(2), mistake(1)], 35) })
+
+    const { wrapper } = await mountList()
+
+    expect(wrapper.find('[data-testid="count"]').text()).toBe('共 35 道错题')
+  })
+
+  it('shows no count when there is nothing yet', async () => {
+    installFakeBackend({ 'GET /api/mistakes': () => page([]) })
+
+    const { wrapper } = await mountList()
+
+    expect(wrapper.find('[data-testid="count"]').exists()).toBe(false)
   })
 })

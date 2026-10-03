@@ -207,4 +207,49 @@ describe('UploadView', () => {
     await flushPromises()
     expect(router.currentRoute.value.fullPath).toBe('/mistakes/5')
   })
+
+  it('marks the current step: take photo, then review, then save', async () => {
+    let release!: () => void
+    const gate = new Promise<void>((resolve) => (release = resolve))
+    backend({
+      'POST /api/uploads': uploadOk({ status: 'ok', text: '识别出的题目', message: null }),
+      'POST /api/mistakes': async () => {
+        await gate
+        return { status: 201, data: { id: 1 } }
+      },
+    })
+    const { wrapper } = await mountUpload()
+    const current = () => wrapper.find('[data-testid="steps"] [aria-current="step"]').text()
+
+    expect(current()).toBe('拍照')
+
+    await choosePhoto(wrapper)
+    expect(current()).toBe('核对')
+
+    await wrapper.find('[data-testid="subject"]').setValue(1)
+    await wrapper.find('form').trigger('submit')
+    expect(current()).toBe('保存')
+
+    release()
+    await flushPromises()
+  })
+
+  it('moves to the review step when the user types the question by hand', async () => {
+    backend()
+    const { wrapper } = await mountUpload()
+
+    await wrapper.find('[data-testid="content"]').setValue('手动输入的题目')
+
+    expect(wrapper.find('[data-testid="steps"] [aria-current="step"]').text()).toBe('核对')
+  })
+
+  it('tells the user when the subject list cannot be loaded instead of failing silently', async () => {
+    backend({ 'GET /api/subjects': () => ({ status: 500, message: '服务器开小差了，请稍后再试' }) })
+
+    const { wrapper } = await mountUpload()
+
+    expect(wrapper.find('[data-testid="error"]').text()).toBe('服务器开小差了，请稍后再试')
+    // 页面其余部分仍然可用
+    expect(wrapper.find('[data-testid="content"]').exists()).toBe(true)
+  })
 })
