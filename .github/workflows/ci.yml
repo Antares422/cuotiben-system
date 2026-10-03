@@ -14,13 +14,13 @@ concurrency:
 jobs:
   backend:
     name: 后端（ruff + 测试）
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: backend
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.2.0  # 该项目不提供浮动的 v10 标签，必须写完整版本号
         with:
           enable-cache: true
           cache-dependency-glob: backend/uv.lock
@@ -33,7 +33,7 @@ jobs:
 
   frontend:
     name: 前端（类型检查 + 测试 + 构建）
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: frontend
