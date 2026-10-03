@@ -145,10 +145,12 @@ class OcrEngine(Protocol):
 | POST | `/api/mistakes` | 保存错题 | 1 |
 | GET | `/api/mistakes` | 列表，时间倒序，分页 | 1 |
 | GET | `/api/mistakes/{id}` | 详情 | 1 |
-| GET | `/api/mistakes` 的 `subject_id` `tag` `mastered` `q` 参数 | 筛选与搜索 | 2 |
+| GET | `/api/mistakes` 增加 `subject_id`、`tag`（可重复，取交集）、`mastered`、`q` | 筛选与搜索 | 2 |
 | PUT | `/api/mistakes/{id}/mastered` | 标记掌握状态 | 2 |
 | PATCH / DELETE | `/api/mistakes/{id}` | 编辑 / 删除 | 3 |
-| PATCH / DELETE | `/api/subjects/{id}`，`/api/tags/*` | 学科与标签管理 | 2 |
+| PATCH / DELETE | `/api/subjects/{id}`、`/api/tags/{id}`；GET `/api/tags` | 学科与标签管理 | 2 |
+
+迭代 2 的接口细节、错误码与决策依据见 [specs/001-filter-mastery-manage](../specs/001-filter-mastery-manage/contracts/api.md)；该迭代**不改表结构**，Alembic 仍推迟到需要时引入。
 
 所有响应都使用 §7.1 的统一响应格式，下面的示例只展示 `data` 的内容。
 
