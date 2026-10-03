@@ -1,0 +1,28 @@
+# runtime data
+data/
+*.db
+
+# python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# node
+node_modules/
+dist/
+
+# editor / os
+.DS_Store
+.idea/
+.vscode/
+
+# local agent settings (skills under .claude/skills are tracked)
+.claude/settings.local.json
+
+# OCR 评测生成物
+tools/ocr-bench/images/
+tools/ocr-bench/pages/
+tools/ocr-bench/results/
