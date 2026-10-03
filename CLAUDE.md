@@ -6,10 +6,12 @@
 
 | 文档 | 内容 |
 | :--- | :--- |
+| `.specify/memory/constitution.md` | **项目宪法（最高优先级）**：七条核心原则、技术与产品约束、开发流程、治理 |
 | `PRD-错题本系统.md` | 需求、范围、验收标准、迭代计划 |
 | `docs/architecture.md` | 技术选型（含被否决方案）、架构、数据模型、接口契约、部署演进 |
 | `docs/ocr-engine-selection.md` | OCR 引擎选型：候选、实测数据、局限、来源 |
 | `docs/development-conventions.md` | **响应格式、错误码、分层、测试、前端、Git 规范，必须遵守** |
+| `specs/` | 每个迭代的规格、计划、任务（Spec Kit 产物） |
 | `.specify/` `.claude/skills/speckit-*` | GitHub Spec Kit（`/speckit-*` 命令） |
 | `.claude/skills/test-driven-development` | TDD 流程，开发时使用 |
 
@@ -83,4 +85,4 @@ npm run dev              # 开发服务器，把 /api 代理到 127.0.0.1:8000
 - 改接口、数据模型或规范时，同一次提交里更新 `docs/`。
 - 提交信息：`<类型>: <中文说明>`，类型为 feat / fix / docs / test / refactor / chore。
 - 不提交 `data/`、数据库文件、`.venv/`、`node_modules/`、密钥。
-- 遇到文档之间矛盾，以 `docs/development-conventions.md` 为准，并指出来让用户确认后修正文档。
+- 遇到文档之间矛盾：宪法 > `docs/development-conventions.md` > 其他文档。发现矛盾要指出来，让用户确认后修正文档，不得带着矛盾继续。

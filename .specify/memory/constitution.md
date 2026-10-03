@@ -1,50 +1,140 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+# 错题本系统 Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. 测试先行（不可协商）
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+没有先失败的测试，就**不得**写生产代码。每个行为按"红 → 绿 → 重构"推进：先写一个测试，亲眼看它因为
+断言而失败，再写让它通过的最少代码。
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+- 接口测试**必须**断言完整响应：HTTP 状态码、`code` 与状态码相等、`message`、`data` 的结构；
+  不得只看状态码。
+- 每个接口至少有成功、失败、边界三类测试；PRD 的每条验收标准至少对应一个测试。
+- 测试**必须**确定、快速、独立：每个用例使用独立的临时数据库和目录，不联网，不依赖执行顺序，
+  时间通过注入的时钟固定。依赖真实外部引擎的测试标 `integration`，默认不运行。
+- 被跳过的测试既不算通过也不算失败，汇报时**必须**说明。
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+理由：没见过失败的测试无法证明它测的是对的东西；本项目一人承担核心开发，自动化测试是唯一的回归保障。
+出处：docs/development-conventions.md §6；CLAUDE.md 规则 5。
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### II. 统一响应契约
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+**每个**接口都返回 `{"code", "message", "data"}`，且 `code` **必须**等于 HTTP 状态码。
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+- 校验类错误统一 422，请求无法解析为 400，资源不存在 404，冲突 409，未预期错误 500。
+- 失败时 `message` 是面向用户的一句中文提示；`data` 是错误详情或 `null`，且始终存在。
+- 未预期错误**必须**返回通用提示，堆栈只写日志，**禁止**泄漏内部细节、SQL、文件路径。
+- 唯一例外：图片读取接口成功时返回图片本身。**不得**新增第二个例外。
+- 新增状态码或顶层字段前，**必须**先更新规范文档。
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+理由：前端的统一处理、测试的完整断言都依赖这个契约；契约不一致会让每个页面各写一套错误处理。
+出处：docs/development-conventions.md §1；CLAUDE.md 规则 1、2。
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+### III. 分层与依赖方向
+
+依赖方向只能是 `api → services → models / ocr`。
+
+- `services` **禁止**依赖 Web 框架；业务失败通过抛出 `AppError` 的子类表达，只在全局处理器里转成响应。
+- 路由层只做：解析请求、调用 service、包装响应；**禁止**在路由里写业务规则。
+- 业务代码**禁止**依赖具体的 OCR 库，只依赖 `OcrEngine` 接口。
+- 依赖（数据库会话、OCR 引擎、时钟、配置）**必须**通过构造函数或依赖注入传入，**禁止**在函数内部读取全局单例。
+
+理由：分层让 service 可以脱离 Web 层单独测试，也让后续替换 OCR 引擎或接入账号体系不必推翻现有结构。
+出处：docs/development-conventions.md §3.1、§3.2；docs/architecture.md §3；CLAUDE.md 规则 3。
+
+### IV. 面向对象设计
+
+类用来表达两种东西：**带依赖的行为单元**（service）和**可替换的实现**（如 OCR 引擎）。
+
+- service **必须**写成类，依赖经构造函数注入并保存为私有属性；方法对应一个业务用例；
+  公共方法超过 10 个时拆分。
+- 外部能力（OCR、时钟、文件存储）用 `Protocol` 定义接口，接口放在使用方所在的包；
+  具体实现通过工厂函数在应用装配处集中创建。
+- 继承只用于两处：`AppError` 错误体系（不超过 2 层）和框架要求的基类；其余**用组合代替继承**，
+  **禁止**多重继承。
+- **禁止**名为 `Utils`、`Helper`、`Common` 的类，或只含静态方法的类；无状态的函数写成模块级函数。
+- 测试替身用 **Fake**（真实可运行的简化实现），**禁止**用 mock 打补丁。
+- 构造函数里**禁止**做耗时或有副作用的操作；这类初始化延迟到第一次使用时。
+- **禁止**为只有一个实现、也不会有第二个实现的东西提前抽接口。
+
+理由：这是课程评分关注的"技术架构规范性"，同时直接支撑可测试性和可替换性。
+出处：docs/development-conventions.md §4；CLAUDE.md 规则 9。
+
+### V. 失败不阻断，数据不丢
+
+用户的录入流程不得被外部能力的失败打断，用户已保存的数据不得因为任何操作而丢失。
+
+- OCR 失败、没识别到文字时，适配器**必须**返回明确状态而不是抛出异常，上传仍然成功，
+  前端提示后允许用户手动输入。
+- 删除或修改有被引用关系的数据时，要么级联、要么拒绝，**不得**留下悬空引用；
+  被占用的资源拒绝删除时，**必须**说明原因。
+- 破坏性操作**必须**先二次确认；失败的整理操作**必须**保持数据不变。
+- 已保存的错题和上传的原图**必须**持久化，服务重启或异常退出后不丢失。
+
+理由：OCR 准确率天然不稳定（尤其手写与公式），用户的错题是长期积累的资产。
+出处：PRD §5 可靠性、§7.1 风险；docs/development-conventions.md §3.5；CLAUDE.md 规则 4；
+specs/001-filter-mastery-manage/spec.md FR-022、FR-023。
+
+### VI. 范围纪律
+
+每个迭代**只承诺**当前迭代的 P0 范围。
+
+- PRD 之外、或属于后续迭代的想法，记录到 PRD 的后续迭代方向或风险表，**不得**顺手实现。
+- 每个迭代先有规格、再有计划、再有任务，最后才实现；范围变更必须先改规格。
+- 优先保证 P0 功能可运行、可演示，不追求"求全而不可用"。
+
+理由：课程每两周一次排位赛，未交付可运行版本直接影响评分；范围蔓延是最大的进度风险。
+出处：PRD §6、§7.1；CLAUDE.md 规则 8；docs/development-conventions.md §9。
+
+### VII. 移动端优先与可见的反馈
+
+用户的每一次等待和每一次失败，都必须被看见。
+
+- 页面**必须**先保证 375px 宽度可用，再适配桌面；可点击元素不小于 44px。
+- 所有会等待的操作（上传、识别、保存、加载）**必须**有加载态，并在等待期间禁用重复提交。
+- 所有失败**必须**让用户看到提示；**禁止**只写 `console.error`。提示直接使用后端返回的 `message`。
+- 所有网络请求**必须**通过统一的请求封装发出，页面和组件**禁止**直接调用 `fetch`；
+  封装层负责把成功解成 `data`、把失败（含断网、非 JSON 响应）统一成带 `code` 与 `message` 的错误。
+- 手机拍照使用文件输入的 `capture` 能力，不依赖需要 HTTPS 的摄像头接口。
+
+理由：PRD 的核心场景是用手机拍照录入；OCR 耗时，没有反馈用户会误以为卡死。
+出处：PRD §5；docs/development-conventions.md §7。
+
+## 技术与产品约束
+
+- **单机、无账号**：个人独立使用，不做多用户数据隔离；不得为"将来可能的账号体系"提前设计。
+- **时间一律 UTC**：数据库存 UTC，接口输出带 `Z` 的 ISO 8601；业务代码通过可注入的时钟取当前时间。
+  SQLite 不保存时区，**必须**经统一的时间类型读写。
+- **上传按内容校验**：按文件内容判断图片类型，不信任扩展名与 `Content-Type`；文件名由服务端生成；
+  读取图片前**必须**严格校验标识格式，防止路径穿越与通配符命中。
+- **配置来自环境变量**：新增环境变量时同时更新配置模块与 `.env.example`；密钥、绝对路径**禁止**入库。
+- **范围外**：账号体系、VLM/LLM 智能解析、复习计划与自测、教师/班级协同、原生移动端 App。
+- **技术栈**：后端 Python + FastAPI + SQLAlchemy + SQLite；OCR 为 RapidOCR（PP-OCRv6），经适配器接入；
+  前端 Vue 3 + Vite + TypeScript。选型依据见 docs/architecture.md 与 docs/ocr-engine-selection.md；
+  更换技术栈属于重大变更，**必须**先修订本宪法。
+
+## 开发流程与质量门槛
+
+- **Spec Kit 流程**：每个迭代按 `specify → plan → tasks → implement` 进行，规格与计划放在 `specs/`。
+- **提交前门槛**：后端 `ruff check`、`ruff format --check` 和全部快速测试通过；
+  前端类型检查、测试和构建通过。任何一项不过，不得提交。
+- **提交规范**：格式 `<类型>: <中文说明>`，类型为 feat / fix / docs / test / refactor / chore；
+  一次提交只做一件事；不加署名行。不提交 `data/`、数据库文件、`.venv/`、`node_modules/`、密钥。
+- **每个迭代完成后 commit 并 push**；仓库是公开的，推送前**必须**扫描密钥与个人信息。
+- **文档与代码同次提交更新**：接口、数据模型或规范变动时，同一次提交里更新 `docs/`。
+- **复杂度与偏离**：任何偏离上述原则的做法，**必须**在计划中写明理由与被否决的更简单方案。
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+本宪法高于其他开发实践。`docs/development-conventions.md` 等规范文档是对宪法的展开；
+两者冲突时以宪法为准，并**必须**立即修正规范文档。
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+- **修订程序**：修订宪法**必须**在 `.specify/memory/constitution.md` 中完成，说明修订理由与影响，
+  并在同一次提交里同步修正受影响的规范文档与模板；修订作为独立提交，提交信息写明新版本号。
+- **版本规则**：语义化版本。MAJOR：删除或重新定义原则（不向后兼容）；MINOR：新增原则或章节、
+  或实质性扩展指导；PATCH：措辞、澄清、错别字等非语义修订。
+- **合规审查**：每次 `/speckit-plan` 的"宪法检查"和每次提交前的自检**必须**对照本宪法；
+  发现违反时先修正代码或先修订宪法，不得带着违反继续推进。
+- **运行时指引**：日常开发的细则见 `CLAUDE.md` 与 `docs/development-conventions.md`。
+
+**Version**: 1.0.0 | **Ratified**: 2026-10-03 | **Last Amended**: 2026-10-03
