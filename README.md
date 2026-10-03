@@ -5,7 +5,7 @@
 
 ## 运行
 
-需要 Python 3.12（推荐用 [uv](https://docs.astral.sh/uv/)）和 Node.js 18+。
+需要 Python 3.12（推荐用 [uv](https://docs.astral.sh/uv/)，它会自动装好对应版本）和 **Node.js 22.12 或更高**（前端的 Vite 8 要求 ≥ 20.19，Vitest 5 要求 ≥ 22.12，版本太低测试跑不起来）。
 
 ```bash
 # 1. 构建前端
@@ -17,6 +17,12 @@ npm run build
 cd ../backend
 uv sync --extra ocr
 STATIC_DIR=../frontend/dist uv run uvicorn app.main:create_app --factory --port 8000
+```
+
+Windows PowerShell 不支持上面的 `变量=值 命令` 写法，改用（未在 Windows 上实测）：
+
+```powershell
+$env:STATIC_DIR = "../frontend/dist"; uv run uvicorn app.main:create_app --factory --port 8000
 ```
 
 打开 <http://127.0.0.1:8000> 即可。数据（数据库和原图）保存在 `backend/data/`。
