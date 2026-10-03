@@ -150,7 +150,7 @@ class OcrEngine(Protocol):
 | PATCH / DELETE | `/api/mistakes/{id}` | 编辑 / 删除 | 3 |
 | PATCH / DELETE | `/api/subjects/{id}`、`/api/tags/{id}`；GET `/api/tags` | 学科与标签管理 | 2 |
 
-迭代 2 的接口细节、错误码与决策依据见 [specs/001-filter-mastery-manage](../specs/001-filter-mastery-manage/contracts/api.md)；该迭代**不改表结构**，Alembic 仍推迟到需要时引入。
+迭代 2 的接口细节、错误码与决策依据见 [specs/001-filter-mastery-manage](../specs/001-filter-mastery-manage/contracts/api.md)；该迭代**不改表结构**，但按宪法 v1.1.0 引入 Alembic 并建立基线版本 `0001`（见该目录 research D10）。
 
 所有响应都使用 §7.1 的统一响应格式，下面的示例只展示 `data` 的内容。
 
@@ -254,7 +254,7 @@ class OcrEngine(Protocol):
 - **开发**：后端和前端各起一个进程，前端通过代理访问 `/api`。
 - **运行**：前端构建后由 FastAPI 提供静态文件，只有一个进程、一个端口；同一局域网内手机浏览器可直接访问。手机拍照使用 `<input type="file" accept="image/*" capture>`，不需要 HTTPS。
 - **Electron 预留**：后端只监听本机地址；数据目录由 `DATA_DIR` 配置；前端用相对路径访问接口。这样前后端代码不改，即可封装成 Electron 壳（后端用 PyInstaller 打成 sidecar，数据放用户数据目录）。是否做由迭代 3 的进度决定。
-- **迁移**：迭代 1 用建表脚本初始化；迭代 2 改动表结构前引入 Alembic，并以现有结构作为基线。
+- **迁移与版本**：表结构变更必须有版本（宪法 v1.1.0）。迭代 1 的库没有版本记录；迭代 2 引入 Alembic，以迭代 1 的表结构作为基线版本 `0001`，旧库启动时自动登记。此后每次改表都新增迁移并带测试。
 - **扩展点**：OCR 引擎（`OcrEngine`）、账号体系（模型预留 `user_id` 的做法留到真正需要时再加，不提前设计）。
 
 ## 11. 非功能需求落地

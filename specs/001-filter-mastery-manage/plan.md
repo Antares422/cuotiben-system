@@ -5,23 +5,23 @@
 ## Summary
 
 在迭代 1 的基础上增加三块能力：①列表按学科、标签（多选取交集）、掌握状态、关键字组合筛选，条件保存在页面地址里；②在列表和详情里标记"已掌握/未掌握"；③新增"管理"页，整理学科和标签。
-**数据库表结构不变**（`mistake.mastered` 字段迭代 1 已建好）：删除标签时在同一事务里先删关联行再删标签，因此本迭代**不引入 Alembic**。后端新增标签接口、扩展错题列表的查询参数、新增掌握状态与学科/标签的重命名删除接口；前端新增筛选栏、标记按钮、管理页。
+**数据库表结构不变**（`mistake.mastered` 字段迭代 1 已建好）：删除标签时在同一事务里先删关联行再删标签，因此**本迭代没有表结构变更**。同时落实宪法 v1.1.0「表结构变更必须有版本」：本迭代引入 Alembic 并建立基线版本 `0001`（迭代 1 的表结构），旧库启动时自动登记，此后任何改表都有版本可循（见 research D10）。后端新增标签接口、扩展错题列表的查询参数、新增掌握状态与学科/标签的重命名删除接口；前端新增筛选栏、标记按钮、管理页。
 
 ## Technical Context
 
 **Language/Version**: Python 3.12（后端）；TypeScript 5.9 + Vue 3（前端）
-**Primary Dependencies**: FastAPI、SQLAlchemy 2.0、Pydantic v2；Vue Router、Vitest（均沿用迭代 1，无新增依赖）
+**Primary Dependencies**: FastAPI、SQLAlchemy 2.0、Pydantic v2；Vue Router、Vitest（沿用迭代 1）；**新增 Alembic**（数据库版本化，宪法 v1.1.0）
 **Storage**: SQLite（沿用，表结构不变）
 **Testing**: pytest + TestClient（后端）；Vitest + Vue Test Utils + 伪造 fetch 的假后端（前端）
 **Target Platform**: 手机浏览器优先，兼容桌面浏览器
 **Project Type**: Web 应用（`backend/` + `frontend/`，沿用）
 **Performance Goals**: 500 道错题下，筛选、标记的响应让用户在 1 秒内看到结果（SC-003、SC-004）
-**Constraints**: 单机无账号；不改表结构；不新增依赖；遵守宪法 v1.0.0
+**Constraints**: 单机无账号；本迭代不改表结构，但必须建立数据库版本基线；遵守宪法 v1.1.0
 **Scale/Scope**: 个人使用，错题数量级为百到千；学科十几个，标签几十到上百个
 
 ## Constitution Check
 
-*GATE：已对照 `.specify/memory/constitution.md` v1.0.0。设计前通过；设计后复核通过。*
+*GATE：已对照 `.specify/memory/constitution.md` v1.1.0。设计前通过；设计后复核通过。*
 
 | 原则 | 结论 | 说明 |
 | :--- | :--- | :--- |
@@ -31,6 +31,7 @@
 | IV 面向对象 | ✅ | 服务写成类；不引入 `Utils`；不新增接口层（没有第二个实现，不提前抽象） |
 | V 失败不阻断，数据不丢 | ✅ | 被占用学科拒绝删除；删标签先二次确认且只解除关联；失败时界面保持原状态（不做乐观更新） |
 | VI 范围纪律 | ✅ | 不含 F6（编辑/删除错题）、F8（导出）、批量操作、合并标签、学科转移 |
+| 约束：表结构变更必须版本化 | ✅ | 本迭代无改表；引入 Alembic 与基线 `0001`，旧库自动登记；迁移测试覆盖「升级后数据不丢」与「结构与模型一致」 |
 | VII 移动端优先与可见反馈 | ✅ | 筛选栏手机上可折叠；所有操作有加载态和失败提示；请求全部走封装层 |
 
 **复杂度偏离**：无。
@@ -59,6 +60,8 @@ backend/app/
 │   ├── mistakes.py        # 变更：列表增加 subject_id/tag/mastered/q；新增 PUT /{id}/mastered
 │   ├── subjects.py        # 变更：列表带 mistake_count；新增 PATCH /{id}、DELETE /{id}
 │   └── tags.py            # 新增：GET /api/tags、PATCH /{id}、DELETE /{id}
+├── migrations/            # 新增：Alembic 迁移，基线 0001 = 迭代 1 的表结构
+├── db_version.py          # 新增：启动时登记基线、自动升级、拒绝比代码新的库
 ├── services/
 │   ├── mistakes.py        # 变更：筛选查询、set_mastered
 │   ├── subjects.py        # 变更：rename、delete、带计数的列表
