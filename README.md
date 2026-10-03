@@ -34,6 +34,32 @@ $env:STATIC_DIR = "../frontend/dist"; uv run uvicorn app.main:create_app --facto
 
 配置项见 [backend/.env.example](backend/.env.example)。
 
+## 开发流程（必须遵循 Spec 驱动）
+
+> **没有规格、计划、任务，就不要写代码。** 这是[项目宪法](.specify/memory/constitution.md)的原则 VI，不是建议。
+
+每个迭代都按下面的顺序走，不跳步。用 Claude Code 的话，每一步都有对应的命令；没有 Claude Code 也要手工做出同样的文件，模板在 `.specify/templates/`。
+
+| 步骤 | 做什么 | 产物（在 `specs/<序号>-<名称>/`） | Claude Code 命令 |
+| :--- | :--- | :--- | :--- |
+| 1. 规格 | 写清楚**做什么、为什么、怎么算做完**，不写技术实现 | `spec.md`、`checklists/` | `/speckit-specify` |
+| 2. 计划 | 定技术方案：接口、数据模型、风险，并对照宪法检查 | `plan.md`、`research.md`、`data-model.md`、`contracts/`、`quickstart.md` | `/speckit-plan` |
+| 3. 任务 | 拆成可认领、可勾选的任务，每个任务都是一个 TDD 循环 | `tasks.md` | `/speckit-tasks` |
+| 4. 实现 | 认领任务，按 TDD 逐个做（先写失败的测试），做完打勾 | 代码 + 测试 | `/speckit-implement` |
+| 5. 验收 | 按 `quickstart.md` 在浏览器里走一遍 | — | — |
+
+可选的辅助命令：`/speckit-clarify`（规格有含糊处时提问）、`/speckit-analyze`（检查规格、计划、任务是否一致）、`/speckit-checklist`。
+
+**动手前先问自己**
+
+- 我要做的事，对应当前迭代 `tasks.md` 里的哪个任务？**找不到对应任务，就先别写代码。**
+- 想加规格里没有的功能、或要改变已有功能的行为 → **先改规格和任务，再写代码**（范围变更必须先改规格）。
+- 范围之外的想法，记到 [PRD](docs/PRD-错题本系统.md) 的"后续迭代方向"或风险表，不要顺手实现。
+
+**不需要新规格的情况**：修复已有功能的 bug（但必须先写一个能复现它的失败测试）；文档笔误；纯样式微调。
+
+**当前在做什么**：看 [docs/PROGRESS.md](docs/PROGRESS.md)，或运行 `tools/progress.sh`。迭代 2 的规格、计划、任务已经写好，在 `specs/001-filter-mastery-manage/`，下一步是从 `tasks.md` 认领任务。
+
 ## 开发与测试
 
 ```bash
@@ -41,13 +67,15 @@ cd backend  && uv run ruff check . && uv run ruff format --check . && uv run pyt
 cd frontend && npm run typecheck && npm test
 ```
 
-开发遵循 TDD（先写失败的测试再写实现），规范见 [docs/development-conventions.md](docs/development-conventions.md)。
+开发遵循 TDD（先写失败的测试再写实现），规范见 [docs/development-conventions.md](docs/development-conventions.md)。这些检查也由 CI 在每次推送和合并请求时自动运行，CI 红了不要合并。
 
 ## 文档
 
 | 文档 | 内容 |
 | :--- | :--- |
-| **[docs/PROGRESS.md](docs/PROGRESS.md)** | **项目进度：做到哪了、下一步做什么、已知问题** |
+| **[docs/PROGRESS.md](docs/PROGRESS.md)** | **项目进度与分工：做到哪了、下一步做什么、怎么认领任务** |
+| **[.specify/memory/constitution.md](.specify/memory/constitution.md)** | **项目宪法（最高规则）：七条原则、技术约束、开发流程、治理** |
+| [specs/](specs/) | 每个迭代的规格、计划、任务（Spec Kit 产物），先读这里再动手 |
 | [docs/PRD-错题本系统.md](docs/PRD-错题本系统.md) | 需求、范围、验收标准、迭代计划 |
 | [docs/architecture.md](docs/architecture.md) | 技术架构、数据模型、接口契约 |
 | [docs/ocr-engine-selection.md](docs/ocr-engine-selection.md) | OCR 引擎选型调研与实测 |
