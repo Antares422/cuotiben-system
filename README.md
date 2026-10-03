@@ -38,9 +38,9 @@ $env:STATIC_DIR = "../frontend/dist"; uv run uvicorn app.main:create_app --facto
 
 > **没有规格、计划、任务，就不要写代码。** 这是[项目宪法](.specify/memory/constitution.md)的原则 VI，不是建议。
 
-每个迭代都按下面的顺序走，不跳步。用 Claude Code 的话，每一步都有对应的命令；没有 Claude Code 也要手工做出同样的文件，模板在 `.specify/templates/`。
+每个迭代都按下面的顺序走，不跳步。每一步都有对应的 Spec Kit 命令，用什么 AI agent 都一样。
 
-| 步骤 | 做什么 | 产物（在 `specs/<序号>-<名称>/`） | Claude Code 命令 |
+| 步骤 | 做什么 | 产物（在 `specs/<序号>-<名称>/`） | 命令 |
 | :--- | :--- | :--- | :--- |
 | 1. 规格 | 写清楚**做什么、为什么、怎么算做完**，不写技术实现 | `spec.md`、`checklists/` | `/speckit-specify` |
 | 2. 计划 | 定技术方案：接口、数据模型、风险，并对照宪法检查 | `plan.md`、`research.md`、`data-model.md`、`contracts/`、`quickstart.md` | `/speckit-plan` |
