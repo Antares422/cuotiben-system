@@ -250,5 +250,6 @@ cd backend && uv run ruff check . && uv run ruff format --check . && uv run pyte
 3. 列测试清单，按 TDD 一条一条做：红 → 绿 → 重构。
 4. 全部测试通过后，对照 PRD 的验收标准手动走一遍演示流程。
 5. 更新文档，合并分支，打版本标签 `v0.<迭代号>`。
+6. **维护进度**：做完一个任务就把 `tasks.md` 里的 `- [ ]` 改成 `- [x]`，与代码同一次提交；每个迭代结束更新 `docs/PROGRESS.md` 的总表。`tools/progress.sh` 可随时查看统计。
 
 范围之外的想法记在 PRD §2.4 或风险表里，不在当前迭代顺手实现。

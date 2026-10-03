@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-03
 
-**Status**: Draft
+**Status**: Approved（规格已确认；计划与任务已完成，实现进度见 tasks.md 与 docs/PROGRESS.md）
 
 **Input**: User description: "错题本系统迭代 2：让用户能在错题多起来之后快速找到并复习。包括三块能力：(1) 错题列表的筛选与搜索；(2) 掌握状态标记；(3) 学科与知识点标签管理。对应 PRD 第 4 节 F3、F5、F7。F6（错题编辑与删除）和 F8（导出）不在本迭代。"
 

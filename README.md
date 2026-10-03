@@ -41,6 +41,7 @@ cd frontend && npm run typecheck && npm test
 
 | 文档 | 内容 |
 | :--- | :--- |
+| **[docs/PROGRESS.md](docs/PROGRESS.md)** | **项目进度：做到哪了、下一步做什么、已知问题** |
 | [PRD-错题本系统.md](PRD-错题本系统.md) | 需求、范围、验收标准、迭代计划 |
 | [docs/architecture.md](docs/architecture.md) | 技术架构、数据模型、接口契约 |
 | [docs/ocr-engine-selection.md](docs/ocr-engine-selection.md) | OCR 引擎选型调研与实测 |
