@@ -238,6 +238,7 @@ cd backend && uv run ruff check . && uv run ruff format --check . && uv run pyte
 
 ## 8. Git 与协作规范
 
+- **`main` 已开启分支保护**：协作者必须通过合并请求合并，且 CI 的后端、前端两项检查必须全绿；禁止强推和删除。管理员可绕过，仅用于合并迭代分支、打标签、紧急修复。设置详情见 `docs/PROGRESS.md`「怎么分工」。
 - 主分支 `main` 保持可运行。功能在分支上做，分支名 `feat/<主题>`、`fix/<主题>`、`docs/<主题>`，完成后合并。
 - 提交信息格式：`<类型>: <中文说明>`，类型为 `feat`、`fix`、`docs`、`test`、`refactor`、`chore`。例：`feat: 上传图片并返回 OCR 草稿`。
 - 一次提交只做一件事；测试和对应的实现可以在同一次提交里。
