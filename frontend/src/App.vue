@@ -41,5 +41,14 @@ import TabLink from './components/TabLink.vue'
       </svg>
       错题本
     </TabLink>
+    <TabLink to="/manage">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+        <circle cx="9" cy="7" r="2" fill="var(--paper)" stroke="currentColor" stroke-width="1.6" />
+        <circle cx="15" cy="12" r="2" fill="var(--paper)" stroke="currentColor" stroke-width="1.6" />
+        <circle cx="8" cy="17" r="2" fill="var(--paper)" stroke="currentColor" stroke-width="1.6" />
+      </svg>
+      管理
+    </TabLink>
   </nav>
 </template>

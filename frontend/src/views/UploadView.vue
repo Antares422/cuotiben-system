@@ -1,13 +1,12 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { errorMessage } from '../api/client'
-import { createMistake, listSubjects, uploadImage } from '../api/mistakes'
-import type { Subject } from '../api/types'
+import { createMistake, uploadImage } from '../api/mistakes'
+import SubjectSelect from '../components/SubjectSelect.vue'
 
 const router = useRouter()
 
-const subjects = ref<Subject[]>([])
 const subjectId = ref<number | ''>('')
 const content = ref('')
 const answer = ref('')
@@ -20,19 +19,11 @@ const saving = ref(false)
 const notice = ref('')
 const error = ref('')
 
-const STEPS = ['拍照', '核对', '保存']
+const STEPS = ['录入', '核对', '保存']
 // 拍了照或自己敲了题目，就进入"核对"；点了保存，就进入"保存"
 const step = computed(() => {
   if (saving.value) return 2
   return imageId.value || content.value.trim() ? 1 : 0
-})
-
-onMounted(async () => {
-  try {
-    subjects.value = await listSubjects()
-  } catch (e) {
-    error.value = errorMessage(e)
-  }
 })
 
 /** 标签可以用中英文逗号、顿号或空格分隔；去掉空白并去重。 */
@@ -139,11 +130,8 @@ async function onPhotoChosen(event: Event) {
       <label for="content" class="field">题目内容 <i class="req" title="必填"></i></label>
       <textarea id="content" v-model="content" rows="5" class="ruled" data-testid="content" />
 
-      <label for="subject" class="field">学科 <i class="req" title="必填"></i></label>
-      <select id="subject" v-model="subjectId" data-testid="subject">
-        <option value="">请选择学科</option>
-        <option v-for="s in subjects" :key="s.id" :value="s.id">{{ s.name }}</option>
-      </select>
+      <label class="field">学科 <i class="req" title="必填"></i></label>
+      <SubjectSelect v-model="subjectId" />
 
       <label for="answer" class="field">正确答案</label>
       <textarea id="answer" v-model="answer" rows="2" class="ruled" data-testid="answer" />

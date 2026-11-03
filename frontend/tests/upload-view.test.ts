@@ -48,12 +48,12 @@ describe('UploadView', () => {
     installFakeBackend({ 'GET /api/subjects': () => ({ data: SUBJECTS }) })
   })
 
-  it('loads the subjects into the subject select', async () => {
+  it('loads the subjects into the subject select with an inline add option', async () => {
     const { wrapper } = await mountUpload()
 
     const options = wrapper.findAll('[data-testid="subject"] option').map((o) => o.text())
 
-    expect(options).toEqual(['请选择学科', '语文', '数学'])
+    expect(options).toEqual(['请选择学科', '语文', '数学', '＋ 新增学科'])
   })
 
   it('uploads the chosen photo and fills the content with the OCR draft', async () => {
@@ -221,7 +221,7 @@ describe('UploadView', () => {
     const { wrapper } = await mountUpload()
     const current = () => wrapper.find('[data-testid="steps"] [aria-current="step"]').text()
 
-    expect(current()).toBe('拍照')
+    expect(current()).toBe('录入')
 
     await choosePhoto(wrapper)
     expect(current()).toBe('核对')
@@ -251,5 +251,53 @@ describe('UploadView', () => {
     expect(wrapper.find('[data-testid="error"]').text()).toBe('服务器开小差了，请稍后再试')
     // 页面其余部分仍然可用
     expect(wrapper.find('[data-testid="content"]').exists()).toBe(true)
+  })
+
+  it('creates a new subject inline, selects it and keeps the rest of the form', async () => {
+    const { calls } = backend({
+      'POST /api/subjects': () => ({ status: 201, data: { id: 3, name: '物理', mistake_count: 0 } }),
+    })
+    const { wrapper } = await mountUpload()
+    await wrapper.find('[data-testid="content"]').setValue('手动输入的题目')
+    await wrapper.find('[data-testid="answer"]').setValue('B')
+
+    await wrapper.find('[data-testid="subject"]').setValue('__new__')
+    await wrapper.find('[data-testid="new-subject"]').setValue('物理')
+    await wrapper.find('[data-testid="new-subject-confirm"]').trigger('click')
+    await flushPromises()
+
+    const create = calls.find((c) => c.method === 'POST' && c.url === '/api/subjects')
+    expect(create?.body).toEqual({ name: '物理' })
+    expect(valueOf(wrapper, 'subject')).toBe('3')
+    // 表单已填内容不丢
+    expect(valueOf(wrapper, 'content')).toBe('手动输入的题目')
+    expect(valueOf(wrapper, 'answer')).toBe('B')
+  })
+
+  it('shows the server message for a duplicate subject and keeps the current selection', async () => {
+    backend({ 'POST /api/subjects': () => ({ status: 409, message: '学科已存在' }) })
+    const { wrapper } = await mountUpload()
+    await wrapper.find('[data-testid="subject"]').setValue('1')
+
+    await wrapper.find('[data-testid="subject"]').setValue('__new__')
+    await wrapper.find('[data-testid="new-subject"]').setValue('语文')
+    await wrapper.find('[data-testid="new-subject-confirm"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="new-subject-error"]').text()).toBe('学科已存在')
+    expect(valueOf(wrapper, 'subject')).toBe('1')
+  })
+
+  it('cancelling the inline add restores the previous subject choice', async () => {
+    backend()
+    const { wrapper } = await mountUpload()
+    await wrapper.find('[data-testid="subject"]').setValue('2')
+
+    await wrapper.find('[data-testid="subject"]').setValue('__new__')
+    await wrapper.find('[data-testid="new-subject"]').setValue('物理')
+    await wrapper.find('[data-testid="new-subject-cancel"]').trigger('click')
+
+    expect(valueOf(wrapper, 'subject')).toBe('2')
+    expect(wrapper.find('[data-testid="subject-add"]').exists()).toBe(false)
   })
 })
