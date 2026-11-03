@@ -25,6 +25,8 @@ class Page(BaseModel, Generic[T]):
     total: int
     page: int
     page_size: int
+    # 不受筛选影响的总数（仅错题列表响应设置，容量提醒用）
+    overall_total: int | None = None
 
 
 def ok(data: object = None) -> dict:
@@ -58,16 +60,24 @@ class MistakeCreate(BaseModel):
     image_id: str | None = None
 
 
+class SubjectBrief(BaseModel):
+    """嵌在错题里的学科摘要：只含 id 与名称。"""
+
+    id: int
+    name: str
+
+
 class MistakeOut(BaseModel):
     id: int
     content: str
     answer: str | None
     error_reason: str | None
-    subject: "SubjectOut"
+    subject: "SubjectBrief"
     tags: list[str]
     image_id: str | None
     image_url: str | None
-    mastered: bool
+    mastery_level: int
+    mastered_at: datetime | None
     created_at: datetime
     updated_at: datetime
 
@@ -78,14 +88,37 @@ class MistakeOut(BaseModel):
             content=mistake.content,
             answer=mistake.answer,
             error_reason=mistake.error_reason,
-            subject=SubjectOut.model_validate(mistake.subject),
+            subject=SubjectBrief(id=mistake.subject.id, name=mistake.subject.name),
             tags=sorted(t.name for t in mistake.tags),  # 按名称排序，输出顺序才确定
             image_id=mistake.image_id,
             image_url=f"/api/images/{mistake.image_id}" if mistake.image_id else None,
-            mastered=mistake.mastered,
+            mastery_level=mistake.mastery_level,
+            mastered_at=mistake.mastered_at,
             created_at=mistake.created_at,
             updated_at=mistake.updated_at,
         )
+
+
+class MasteryUpdate(BaseModel):
+    level: int = Field(ge=1, le=5)
+
+
+class MistakeUpdate(MistakeCreate):
+    """编辑错题：字段与录入一致，校验规则相同。"""
+
+
+class NameUpdate(BaseModel):
+    """重命名学科/标签。空名与超长由服务层按资源给出中文提示（T033）。"""
+
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    name: str
+
+
+class TagOut(BaseModel):
+    id: int
+    name: str
+    mistake_count: int
 
 
 class SubjectCreate(BaseModel):
@@ -99,3 +132,4 @@ class SubjectOut(BaseModel):
 
     id: int
     name: str
+    mistake_count: int = 0

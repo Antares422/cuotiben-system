@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, ForeignKey, String, Table, Text
+from sqlalchemy import Column, ForeignKey, String, Table, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base, UtcDateTime
@@ -37,7 +37,8 @@ class Mistake(Base):
     error_reason: Mapped[str | None] = mapped_column(Text)
     subject_id: Mapped[int] = mapped_column(ForeignKey("subject.id"))
     image_id: Mapped[str | None] = mapped_column(String(32))
-    mastered: Mapped[bool] = mapped_column(Boolean, default=False)
+    mastery_level: Mapped[int] = mapped_column(default=1, server_default="1")
+    mastered_at: Mapped[datetime | None] = mapped_column(UtcDateTime)
     created_at: Mapped[datetime] = mapped_column(UtcDateTime)
     updated_at: Mapped[datetime] = mapped_column(UtcDateTime)
 

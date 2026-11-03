@@ -21,7 +21,8 @@ def test_create_mistake_returns_201_with_full_object(client, math_id) -> None:
         "tags": [],
         "image_id": None,
         "image_url": None,
-        "mastered": False,
+        "mastery_level": 1,
+        "mastered_at": None,
         "created_at": "2026-10-03T08:30:00Z",
         "updated_at": "2026-10-03T08:30:00Z",
     }

@@ -9,6 +9,7 @@ from app.ocr.base import OcrEngine
 from app.services.images import ImageService
 from app.services.mistakes import Clock, MistakeService
 from app.services.subjects import SubjectService
+from app.services.tags import TagService
 from app.services.uploads import UploadService
 
 
@@ -60,6 +61,11 @@ def get_mistake_service(
     return MistakeService(session, clock, images)
 
 
+def get_tag_service(session: SessionDep) -> TagService:
+    return TagService(session)
+
+
 MistakeServiceDep = Annotated[MistakeService, Depends(get_mistake_service)]
 SubjectServiceDep = Annotated[SubjectService, Depends(get_subject_service)]
+TagServiceDep = Annotated[TagService, Depends(get_tag_service)]
 UploadServiceDep = Annotated[UploadService, Depends(get_upload_service)]
