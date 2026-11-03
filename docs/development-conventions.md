@@ -68,7 +68,7 @@
 
 ## 2. 接口设计规范
 
-- 路径以 `/api` 开头，资源用复数名词：`/api/mistakes`、`/api/subjects`。路径中不出现动词，状态变更用子资源，如 `PUT /api/mistakes/{id}/mastered`。
+- 路径以 `/api` 开头，资源用复数名词：`/api/mistakes`、`/api/subjects`。路径中不出现动词，状态变更用子资源，如 `PUT /api/mistakes/{id}/mastery`。
 - JSON 字段一律 `snake_case`。
 - 时间一律 ISO 8601 UTC，带 `Z` 后缀：`2026-10-03T08:30:00Z`（可含小数秒）。数据库也存 UTC；SQLite 不保存时区，必须通过 `UtcDateTime` 类型读写，禁止直接用 `DateTime`。
 - ID 对外是数据库整数；图片 ID 是 32 位十六进制字符串。
