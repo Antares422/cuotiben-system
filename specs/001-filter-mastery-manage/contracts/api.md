@@ -1,7 +1,8 @@
 # API Contracts: 迭代 2 新增与变更
 
 所有接口遵守统一响应格式：`{"code": <HTTP 状态码>, "message": "...", "data": ...}`。下面的 `data` 只写成功时的内容。
-变更均**向后兼容**：只加字段、加可选参数。
+
+**兼容性说明**（2026-10-27 修订）：`MistakeOut` 用 `mastery_level` / `mastered_at` 取代迭代 1 的 `mastered` 字段，这是对既有响应的**不兼容变更**，由迁移 `0002` 同步处理存量数据（`true→4`、`false→1`）。本迭代尚未对外发布，故可接受；其余变更均为向后兼容（只加字段、加可选参数）。
 
 ## 变更：GET /api/mistakes
 
@@ -11,18 +12,35 @@
 | :--- | :--- | :--- |
 | `subject_id` | int | 学科 |
 | `tag` | string，可重复 | 标签名；多个时必须同时具备 |
-| `mastered` | bool | `true` 已掌握 / `false` 未掌握；不传为全部 |
+| `mastery_min` | int，1~5 | 掌握程度下限（含）；不传为不限 |
+| `mastery_max` | int，1~5 | 掌握程度上限（含）；不传为不限；`mastery_min > mastery_max` 得到空列表 |
 | `q` | string，最长 100 | 关键字，搜 `content`、`answer`、`error_reason` |
 | `page` / `page_size` | int | 同迭代 1 |
 
-- `data.total` 是筛选后的总数。
-- 校验失败 → 422（如 `mastered=maybe`、`q` 超长）。未知的 `subject_id`、`tag` → 200 空列表。
+- `data.total` 是筛选后的总数；**新增** `data.overall_total`：不受筛选影响的错题总数（容量提醒用，FR-026）。
+- 校验失败 → 422（如 `mastery_min=0`、`mastery_max=6`、非整数、`q` 超长）。未知的 `subject_id`、`tag` → 200 空列表。
 
-## 新增：PUT /api/mistakes/{id}/mastered
+## 新增：PUT /api/mistakes/{id}/mastery
 
-- 请求：`{"mastered": true}`（必填布尔）
-- 200：更新后的完整错题（含新的 `mastered`、`updated_at`）
-- 404：`错题不存在`；422：`mastered` 缺失或不是布尔
+- 请求：`{"level": 3}`（必填，1~5 整数）
+- 200：更新后的完整错题（含 `mastery_level`、`mastered_at`、`updated_at`）。等级从 <4 升到 ≥4 时写入 `mastered_at`；降到 <4 时置 `null`；同级重复设置幂等，不动 `mastered_at`
+- 404：`错题不存在`；422：`level` 缺失或不是 1~5 的整数
+
+## 新增：PATCH /api/mistakes/{id}
+
+编辑错题（F6 纠错），校验规则与录入一致。
+
+- 请求：与 `POST /api/mistakes` 相同的字段（`content`、`subject_id` 必填；`answer`、`error_reason`、`tags`、`image_id` 可选）
+- 200：更新后的完整错题；`mastery_level`、`mastered_at`、`created_at` 不变，`updated_at` 更新
+- 404：`错题不存在`；422：内容为空、学科不存在、图片不存在等（同录入）
+
+## 新增：DELETE /api/mistakes/{id}
+
+清理已熟练的错题（F6/F9）。
+
+- 掌握程度 ≥4：200，`data` 为 `null`；`mistake_tag` 关联行级联清理，原始图片文件保留（与迭代 1 孤儿图片策略一致）
+- 掌握程度 <4：409，`message` 为 `掌握程度达到四级后才能清理（当前：N 级）`，`data` 为 `{"mastery_level": N}`；该题保持不变
+- 404：`错题不存在`
 
 ## 变更：GET /api/subjects
 
@@ -64,7 +82,9 @@
 | 字段 | 中文名 |
 | :--- | :--- |
 | `q` | 关键字 |
-| `mastered` | 掌握状态 |
+| `mastery_min` | 最低掌握程度 |
+| `mastery_max` | 最高掌握程度 |
+| `level` | 掌握程度 |
 | `tag` | 标签 |
 | `subject_id`（已有） | 学科 |
 | `name`（已有，学科名称） | 需按资源区分为"学科名称"/"标签名称" |

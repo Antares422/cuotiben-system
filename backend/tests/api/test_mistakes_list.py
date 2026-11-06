@@ -8,7 +8,13 @@ def test_list_mistakes_when_empty_returns_empty_page(client) -> None:
     assert resp.json() == {
         "code": 200,
         "message": "ok",
-        "data": {"items": [], "total": 0, "page": 1, "page_size": 20},
+        "data": {
+            "items": [],
+            "total": 0,
+            "page": 1,
+            "page_size": 20,
+            "overall_total": 0,
+        },
     }
 
 

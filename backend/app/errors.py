@@ -20,6 +20,11 @@ FIELD_LABELS = {
     "mistake_id": "错题编号",
     "page": "页码",
     "page_size": "每页数量",
+    "q": "关键字",
+    "mastery_min": "最低掌握程度",
+    "mastery_max": "最高掌握程度",
+    "level": "掌握程度",
+    "tag": "标签",
 }
 
 _REQUIRED_TYPES = {"missing", "string_too_short"}

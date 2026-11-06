@@ -1,6 +1,13 @@
 export interface Subject {
   id: number
   name: string
+  mistake_count?: number
+}
+
+export interface Tag {
+  id: number
+  name: string
+  mistake_count: number
 }
 
 export interface OcrDraft {
@@ -24,7 +31,8 @@ export interface Mistake {
   tags: string[]
   image_id: string | null
   image_url: string | null
-  mastered: boolean
+  mastery_level: number
+  mastered_at: string | null
   created_at: string
   updated_at: string
 }
@@ -43,4 +51,6 @@ export interface Page<T> {
   total: number
   page: number
   page_size: number
+  /** 不受筛选影响的错题总数，容量提醒用 */
+  overall_total: number
 }

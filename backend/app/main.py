@@ -5,9 +5,10 @@ from datetime import UTC, datetime
 from fastapi import FastAPI
 
 from app import models  # noqa: F401  确保所有表在建表前已注册
-from app.api import images, mistakes, subjects, uploads
+from app.api import images, mistakes, subjects, tags, uploads
 from app.config import Settings
 from app.db import Base, make_engine, make_session_factory
+from app.db_version import ensure_latest
 from app.errors import register_exception_handlers
 from app.frontend import mount_frontend
 from app.ocr.base import OcrEngine
@@ -40,6 +41,7 @@ def create_app(
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         engine = make_engine(settings.data_dir)
         Base.metadata.create_all(engine)
+        ensure_latest(engine)
         app.state.settings = settings
         app.state.ocr_engine = ocr_engine or build_ocr_engine(settings)
         app.state.clock = clock or utc_now
@@ -55,6 +57,7 @@ def create_app(
     app.include_router(uploads.router)
     app.include_router(images.router)
     app.include_router(mistakes.router)
+    app.include_router(tags.router)
     if settings.static_dir is not None:
         mount_frontend(app, settings.static_dir)
     return app

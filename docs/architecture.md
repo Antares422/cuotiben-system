@@ -74,9 +74,11 @@ backend/
     models.py            # ORM 模型
     schemas.py           # Pydantic 请求/响应模型
     errors.py            # 统一错误类型与处理器
-    api/                 # subjects.py  uploads.py  mistakes.py  images.py
-    services/            # mistakes.py  images.py  subjects.py
+    api/                 # subjects.py  uploads.py  mistakes.py  images.py  tags.py
+    services/            # mistakes.py  images.py  subjects.py  tags.py
     ocr/                 # base.py  rapid.py  fake.py
+    db_version.py        # Alembic 迁移链：基线 0001、迁移 0002（启动时自动升级/拒绝更新的库）
+    migrations 逻辑       # 迁移脚本内嵌于 db_version.py（MIGRATIONS 字典）
   tests/
 frontend/
   src/
@@ -100,7 +102,8 @@ mistake(
   error_reason   TEXT NULL,
   subject_id     FK -> subject.id NOT NULL,
   image_id       TEXT NULL,          -- 对应 data/images/ 下的文件
-  mastered       BOOLEAN NOT NULL DEFAULT 0,
+  mastery_level  INTEGER NOT NULL DEFAULT 1,   -- 掌握程度一~五级
+  mastered_at    DATETIME NULL,      -- 达到四级的时间（UTC），降级清空
   created_at     DATETIME NOT NULL,  -- UTC
   updated_at     DATETIME NOT NULL   -- UTC
 )
@@ -111,7 +114,8 @@ mistake_tag(mistake_id FK, tag_id FK, PRIMARY KEY(mistake_id, tag_id))
 - 首次启动写入默认学科（语文、数学、英语、物理、化学、生物、政治、历史、地理），用户可新增。
 - 时间一律存 UTC，接口输出 ISO 8601 并带 `Z` 后缀（可含小数秒）；SQLite 不保存时区，由 `UtcDateTime` 类型在读写时统一处理；业务代码通过可注入的时钟取当前时间，便于测试。
 - 保存错题时，`tags` 传名称列表，不存在的标签自动创建，已存在的复用；标签名去除首尾空白、去重、忽略空白项；输出时按名称排序，保证列表与详情顺序一致。
-- `mastered` 字段从迭代 1 就建好，F4 详情页要展示它；修改它的接口在迭代 2（F5）。
+- 掌握程度为一~五级（一级=完全不会，五级=完全掌握），用户自评，新题默认一级；达到四级时写入 `mastered_at`（UTC，注入时钟），降级到三级及以下清空（迭代 2，F5 分级版）。
+- 清理：掌握程度达四级及以上的错题才可删除（低于四级 409），删除需二次确认（迭代 2，F6）；错题总数超过 100 时列表页软提醒（迭代 2，F9）。
 
 ## 6. OCR 适配器
 
@@ -145,12 +149,12 @@ class OcrEngine(Protocol):
 | POST | `/api/mistakes` | 保存错题 | 1 |
 | GET | `/api/mistakes` | 列表，时间倒序，分页 | 1 |
 | GET | `/api/mistakes/{id}` | 详情 | 1 |
-| GET | `/api/mistakes` 增加 `subject_id`、`tag`（可重复，取交集）、`mastered`、`q` | 筛选与搜索 | 2 |
-| PUT | `/api/mistakes/{id}/mastered` | 标记掌握状态 | 2 |
-| PATCH / DELETE | `/api/mistakes/{id}` | 编辑 / 删除 | 3 |
+| GET | `/api/mistakes` 增加 `subject_id`、`tag`（可重复，取交集）、`mastery_min`/`mastery_max`（掌握程度区间）；响应带 `overall_total` | 筛选与搜索 | 2 |
+| PUT | `/api/mistakes/{id}/mastery` | 设置掌握程度（1~5），达四级记录 `mastered_at` | 2 |
+| PATCH / DELETE | `/api/mistakes/{id}` | 编辑错题 / 清理（达四级才可删，否则 409） | 2 |
 | PATCH / DELETE | `/api/subjects/{id}`、`/api/tags/{id}`；GET `/api/tags` | 学科与标签管理 | 2 |
 
-迭代 2 的接口细节、错误码与决策依据见 [specs/001-filter-mastery-manage](../specs/001-filter-mastery-manage/contracts/api.md)；该迭代**不改表结构**，但按宪法 v1.1.0 引入 Alembic 并建立基线版本 `0001`（见该目录 research D10）。
+迭代 2 的接口细节、错误码与决策依据见 [specs/001-filter-mastery-manage](../specs/001-filter-mastery-manage/contracts/api.md)；该迭代**有表结构变更**（`mastered` BOOL → `mastery_level` + `mastered_at`，迁移 `0002`，存量 `true→4`/`false→1`），并按宪法 v1.1.0 引入 Alembic、基线版本 `0001`（见该目录 research D10、D11）。
 
 所有响应都使用 §7.1 的统一响应格式，下面的示例只展示 `data` 的内容。
 
@@ -254,7 +258,7 @@ class OcrEngine(Protocol):
 - **开发**：后端和前端各起一个进程，前端通过代理访问 `/api`。
 - **运行**：前端构建后由 FastAPI 提供静态文件，只有一个进程、一个端口；同一局域网内手机浏览器可直接访问。手机拍照使用 `<input type="file" accept="image/*" capture>`，不需要 HTTPS。
 - **Electron 预留**：后端只监听本机地址；数据目录由 `DATA_DIR` 配置；前端用相对路径访问接口。这样前后端代码不改，即可封装成 Electron 壳（后端用 PyInstaller 打成 sidecar，数据放用户数据目录）。是否做由迭代 3 的进度决定。
-- **迁移与版本**：表结构变更必须有版本（宪法 v1.1.0）。迭代 1 的库没有版本记录；迭代 2 引入 Alembic，以迭代 1 的表结构作为基线版本 `0001`，旧库启动时自动登记。此后每次改表都新增迁移并带测试。
+- **迁移与版本**：表结构变更必须有版本（宪法 v1.1.0）。迭代 1 的库没有版本记录；迭代 2 引入 Alembic（`db_version.py`），以迭代 1 的表结构作为基线版本 `0001`，迁移 `0002` 把 `mistake.mastered`(BOOL) 改为 `mastery_level`(INTEGER 一~五级) 并新增 `mastered_at`（达四级记录掌握时间）；旧库启动时自动登记并升级，版本比代码新时拒绝启动；升级后校验表结构与 ORM 模型一致。
 - **扩展点**：OCR 引擎（`OcrEngine`）、账号体系（模型预留 `user_id` 的做法留到真正需要时再加，不提前设计）。
 
 ## 11. 非功能需求落地

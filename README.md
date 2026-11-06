@@ -70,7 +70,7 @@ git checkout -- .specify                                              # 还原�
 
 **不需要新规格的情况**：修复已有功能的 bug（但必须先写一个能复现它的失败测试）；文档笔误；纯样式微调。
 
-**当前在做什么**：看 [docs/PROGRESS.md](docs/PROGRESS.md)，或运行 `tools/progress.sh`。迭代 2 的规格、计划、任务已经写好，在 `specs/001-filter-mastery-manage/`，下一步是从 `tasks.md` 认领任务。
+**当前在做什么**：看 [docs/PROGRESS.md](docs/PROGRESS.md)，或运行 `tools/progress.sh`。迭代 2（筛选搜索、掌握程度五级、编辑与清理、容量提醒、学科与标签管理）代码已完成并通过全部自动化测试（后端 156 + 前端 126），待按 `specs/001-filter-mastery-manage/quickstart.md` 手动验收后合并打 `v0.2` 标签。
 
 ## 开发与测试
 

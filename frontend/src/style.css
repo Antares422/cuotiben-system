@@ -446,6 +446,20 @@ button.secondary:active { box-shadow: 0 0 0 var(--cover); }
 .note .text.empty { color: var(--muted); font: 15px/1.7 var(--sans); text-decoration: none; }
 
 .detail .time { margin: 30px 0 0; color: var(--muted); font-size: 13px; text-align: right; }
+.detail .stepper { display: flex; gap: 14px; margin: 22px 0 0; }
+.detail .step-button {
+  flex: 1;
+  min-height: 44px;
+  border: 2px solid var(--red);
+  border-radius: 10px;
+  background: var(--sheet);
+  color: var(--red);
+  font-size: 16px;
+  font-family: var(--sans);
+  cursor: pointer;
+}
+.detail .step-button.primary { background: var(--red); color: #fff; }
+.detail .step-button:disabled { opacity: 0.4; cursor: default; }
 
 /* ───────── 页面切换 ───────── */
 
@@ -481,4 +495,194 @@ button.secondary:active { box-shadow: 0 0 0 var(--cover); }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* ───────── 容量提醒 ───────── */
+
+.capacity {
+  display: flex;
+  width: 100%;
+  min-height: 44px;
+  margin: 0 0 14px;
+  padding: 0 16px;
+  color: #7a4a05;
+  font: 600 14.5px/1.4 var(--sans);
+  letter-spacing: 0.04em;
+  background: #fff3cf;
+  border: 1.5px dashed #e0a31a;
+  border-radius: 10px;
+  box-shadow: none;
+}
+.capacity:active { transform: none; box-shadow: none; }
+.capacity::before { content: '⚠'; margin-right: 8px; }
+
+/* ───────── 筛选栏 ───────── */
+
+.filter-bar {
+  margin-bottom: 16px;
+  padding: 4px 14px 14px;
+  background: var(--sheet);
+  border-radius: 10px;
+  box-shadow: 0 4px 14px rgba(60, 45, 20, 0.08);
+}
+.filter-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 4px;
+  color: var(--cover);
+  font: 700 15px/1 var(--serif);
+  letter-spacing: 0.1em;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.filter-toggle:active { transform: none; box-shadow: none; }
+.filter-panel { display: grid; gap: 4px; }
+.filter-field {
+  display: block;
+  margin-top: 10px;
+  color: var(--muted);
+  font: 600 13px/1.6 var(--sans);
+  letter-spacing: 0.08em;
+}
+.filter-field small { margin-left: 6px; font-weight: 400; letter-spacing: 0; }
+.filter-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.tag-chip {
+  min-height: 34px;
+  padding: 0 14px;
+  color: #4a5062;
+  font: 400 13.5px/1 var(--sans);
+  letter-spacing: 0.04em;
+  background: #f0e9d6;
+  border: 1.5px solid transparent;
+  border-radius: 999px;
+  box-shadow: none;
+}
+.tag-chip.on {
+  color: #fff;
+  font-weight: 700;
+  background: var(--accent);
+  border-color: var(--cover);
+}
+.tag-chip:active { transform: none; box-shadow: none; }
+.filter-hint { margin: 0; color: var(--muted); font-size: 13px; }
+.range-row { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
+.range-row select { flex: 1; }
+.filter-search { display: flex; gap: 10px; }
+.filter-search input { flex: 1; }
+.filter-search button {
+  min-height: 44px;
+  padding: 0 18px;
+  font-size: 15px;
+}
+.filter-clear {
+  justify-self: start;
+  min-height: 40px;
+  margin-top: 12px;
+  padding: 0 16px;
+  color: var(--red-dark);
+  font: 600 13.5px/1 var(--sans);
+  letter-spacing: 0.06em;
+  background: transparent;
+  border: 1.5px dashed var(--red);
+  border-radius: 999px;
+  box-shadow: none;
+}
+.filter-clear:active { transform: none; box-shadow: none; }
+
+/* ───────── 掌握程度控件 ───────── */
+
+.mastery { position: relative; z-index: 1; }
+.mastery-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font: 600 13px/1.5 var(--sans);
+  letter-spacing: 0.06em;
+}
+.mastery-select { width: auto; min-height: 40px; padding-right: 30px; font-size: 14px; }
+.mastery .error { margin: 6px 0 0; padding: 6px 10px; font-size: 13px; }
+.mastered-at { margin: 4px 0 0; color: var(--green); font: 600 12.5px/1.5 var(--sans); }
+.card .mastery { flex: none; }
+.card .foot { gap: 10px; }
+.card .mastered-at { text-align: right; }
+.detail .mastery { margin-top: 18px; }
+.detail .mastery-label { font-size: 14px; }
+.detail .mastery-select { min-height: 44px; font-size: 15px; }
+
+/* ───────── 详情页操作 ───────── */
+
+.detail-actions { display: inline-flex; align-items: center; gap: 14px; }
+.edit-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--blue);
+  font: 600 15px/1 var(--sans);
+}
+.delete-button {
+  min-height: 44px;
+  padding: 0 18px;
+  font: 700 14px/1 var(--serif);
+}
+
+/* ───────── 内联新增学科 ───────── */
+
+.subject-add { margin-top: 10px; padding: 12px; background: #f7f2e2; border-radius: 8px; }
+.subject-add-actions { display: flex; gap: 10px; margin-top: 10px; }
+.subject-add-actions button { min-height: 42px; padding: 0 20px; font-size: 14.5px; }
+.subject-add .error { margin: 8px 0 0; padding: 6px 10px; font-size: 13px; }
+
+/* ───────── 管理页 ───────── */
+
+.manage-section { margin-top: 22px; }
+.manage-section h3 {
+  margin: 0 0 10px;
+  font: 700 19px/1.4 var(--serif);
+  letter-spacing: 0.1em;
+  background: linear-gradient(transparent 58%, var(--highlight) 58%, var(--highlight) 92%, transparent 92%);
+  display: inline-block;
+  padding: 0 4px;
+}
+.manage-add { display: flex; gap: 10px; }
+.manage-add input { flex: 1; }
+.manage-add button { min-height: 44px; padding: 0 18px; font-size: 14.5px; }
+.manage-list { display: grid; gap: 8px; margin: 12px 0 0; padding: 0; list-style: none; }
+.manage-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 10px 14px;
+  background: var(--sheet);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(60, 45, 20, 0.08);
+}
+.row-name { flex: 1; font: 600 15.5px/1.5 var(--serif); }
+.row-count { color: var(--muted); font-size: 13px; }
+.row-action {
+  min-height: 40px;
+  padding: 0 14px;
+  color: var(--cover);
+  font: 600 13.5px/1 var(--sans);
+  letter-spacing: 0.04em;
+  background: transparent;
+  border: 1.5px solid var(--cover);
+  border-radius: 8px;
+  box-shadow: none;
+}
+.row-action:active { transform: none; box-shadow: none; }
+.row-action.danger { color: var(--red-dark); border-color: var(--red); }
+.manage-row .error { flex-basis: 100%; margin: 4px 0 0; padding: 6px 10px; font-size: 13px; }
+.rename-input { flex: 1; min-width: 0; }
+
+@media (min-width: 760px) {
+  .filter-bar { padding: 10px 18px 16px; }
+  .filter-toggle { display: none; }
+  .capacity { width: auto; }
 }
